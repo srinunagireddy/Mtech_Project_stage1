@@ -1,0 +1,29 @@
+// New Converter Daemon
+// Takes a 64-bit word, extracts the lower 32 bits,
+// and sends them sequentially. The upper 32 bits are ignored.
+//
+// MACROS used:
+//   CONVERTERDAEMON  : Name of the module
+//   INPUT_64_PORT    : Name of the 64-bit input pipe
+//   OUTPUT_32_PORT   : Name of the 32-bit output pipe
+//
+$module [ ##CONVERTERDAEMON ]
+	$in () $out () $is
+{
+	$branchblock[loop] {
+		$dopipeline $depth 2 $fullrate
+			$merge $entry $loopback
+				$phi in_word_64 := ##INPUT_64_PORT $on $entry, $loopback
+			$endmerge
+
+			// Extract the lower 32 bits
+			$volatile word_lower := ($slice in_word_64 31 0)
+
+			$rreport (##CONVERTERDAEMON conversion_trace in_word_64 word_lower)
+
+			// Write only the lower 32 bits to the output pipe
+			##OUTPUT_32_PORT := word_lower
+			
+		$while 1
+	}
+}

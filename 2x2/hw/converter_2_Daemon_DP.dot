@@ -1,0 +1,18 @@
+digraph data_path {
+  RPIPE_in_data_2_64_68_wire [shape=ellipse];
+  in_word_64_66 [shape=ellipse];
+  konst_81_wire_constant [shape=ellipse];
+  word_lower_73 [shape=ellipse];
+  RPIPE_in_data_2_64_68_inst [shape=rectangle];
+RPIPE_in_data_2_64_68_inst -> RPIPE_in_data_2_64_68_wire;
+  WPIPE_in_data_2_77_inst [shape=rectangle];
+word_lower_73  -> WPIPE_in_data_2_77_inst;
+  do_while_stmt_64_branch [shape=rectangle];
+konst_81_wire_constant  -> do_while_stmt_64_branch;
+  slice_72_inst [shape=diamond];
+in_word_64_66  -> slice_72_inst;
+slice_72_inst -> word_lower_73;
+  ssrc_phi_stmt_66 [shape=diamond];
+RPIPE_in_data_2_64_68_wire  -> ssrc_phi_stmt_66;
+ssrc_phi_stmt_66 -> in_word_64_66;
+}

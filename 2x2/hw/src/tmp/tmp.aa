@@ -1,0 +1,20 @@
+$module [foo] $in (a b: $uint<1>) $out (c: $uint<1>) $is
+{
+	c := (a + b)
+}
+
+
+
+
+// a could be 10 bit number.
+
+	(a & 3)
+
+	// a is a 10-bit number
+	(a << 1)
+		this will become a constant shift operation
+		which the synthesis tool (VHDL -> logic) will
+		optimize (?)
+
+	($concat ($slice a 8 0) ZERO_1)
+		this costs no hardware in the data path..
