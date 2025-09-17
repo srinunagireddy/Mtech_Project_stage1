@@ -1,0 +1,17 @@
+// 64-bit pipes from the testbench
+$pipe tb_memory_access_0: $uint<64>
+$pipe tb_memory_access_1: $uint<64>
+$pipe tb_memory_access_2: $uint<64>
+$pipe tb_memory_access_3: $uint<64>
+
+// 49-bit pipes from the converters to the interconnect
+$pipe memory_access_0: $uint<49>
+$pipe memory_access_1: $uint<49>
+$pipe memory_access_2: $uint<49>
+$pipe memory_access_3: $uint<49>
+
+// 32-bit response pipes back to the testbench
+$pipe memory_response_0: $uint<32>
+$pipe memory_response_1: $uint<32>
+$pipe memory_response_2: $uint<32>
+$pipe memory_response_3: $uint<32>

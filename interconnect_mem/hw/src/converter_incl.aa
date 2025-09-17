@@ -1,0 +1,14 @@
+// Template for the 64-to-49 bit converter daemon
+$module [ ##CONVERTERDAEMON ]
+	$in () $out () $is
+{
+	$branchblock[loop] {
+		$dopipeline $depth 4 $fullrate
+			$merge $entry $loopback
+				$phi in_word_64 := ##INPUT_64_PORT $on $entry, $loopback
+			$endmerge
+			$volatile word_49 := ($slice in_word_64 48 0)
+			##OUTPUT_49_PORT := word_49
+		$while 1
+	}
+}

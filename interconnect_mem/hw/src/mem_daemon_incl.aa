@@ -1,0 +1,69 @@
+// Memory Bank Modules (14-bit address for 16384-word array)
+$module[accessBank_0] $in (rwbar: $uint<1> addr: $uint<14> wdata: $uint<32>) $out (rdata: $uint<32>) $is { $storage M: $array [16384] $of $uint<32> rdata := M[addr] $guard (~rwbar) M[addr] := wdata }
+$module[accessBank_1] $in (rwbar: $uint<1> addr: $uint<14> wdata: $uint<32>) $out (rdata: $uint<32>) $is { $storage M: $array [16384] $of $uint<32> rdata := M[addr] $guard (~rwbar) M[addr] := wdata }
+$module[accessBank_2] $in (rwbar: $uint<1> addr: $uint<14> wdata: $uint<32>) $out (rdata: $uint<32>) $is { $storage M: $array [16384] $of $uint<32> rdata := M[addr] $guard (~rwbar) M[addr] := wdata }
+$module[accessBank_3] $in (rwbar: $uint<1> addr: $uint<14> wdata: $uint<32>) $out (rdata: $uint<32>) $is { $storage M: $array [16384] $of $uint<32> rdata := M[addr] $guard (~rwbar) M[addr] := wdata }
+
+// Main Interconnect Daemon with internal parallel block
+$module[mem_daemon] $in() $out() $is 
+{
+  $parallelblock[pb] 
+  {
+    $branchblock[loop0] {
+      $dopipeline $depth 15 $fullrate $merge $entry $loopback $phi req := memory_access_0 $on $entry, $loopback $endmerge
+      	$volatile $split (req 1 16 32) (rwbar addr16 wdata)
+      	$volatile bank_id := ($slice addr16 1 0)
+      	$volatile addr_in_bank := ($slice addr16 15 2)
+        $volatile b0 := (bank_id == 0) $volatile b1 := (bank_id == 1) $volatile b2 := (bank_id == 2) $volatile b3 := (bank_id == 3)
+      	$guard (b0) $call accessBank_0 (rwbar addr_in_bank wdata) (rdata_0)
+      	$guard (b1) $call accessBank_1 (rwbar addr_in_bank wdata) (rdata_1)
+      	$guard (b2) $call accessBank_2 (rwbar addr_in_bank wdata) (rdata_2)
+      	$guard (b3) $call accessBank_3 (rwbar addr_in_bank wdata) (rdata_3)
+      	rdata := ($excmux b0 rdata_0 b1 rdata_1 b2 rdata_2 b3 rdata_3)
+	 	memory_response_0 := rdata
+      $while 1
+    }
+    $branchblock[loop1] {
+      $dopipeline $depth 15 $fullrate $merge $entry $loopback $phi req := memory_access_1 $on $entry, $loopback $endmerge
+      	$volatile $split (req 1 16 32) (rwbar addr16 wdata)
+      	$volatile bank_id := ($slice addr16 1 0)
+      	$volatile addr_in_bank := ($slice addr16 15 2)
+        $volatile b0 := (bank_id == 0) $volatile b1 := (bank_id == 1) $volatile b2 := (bank_id == 2) $volatile b3 := (bank_id == 3)
+      	$guard (b0) $call accessBank_0 (rwbar addr_in_bank wdata) (rdata_0)
+      	$guard (b1) $call accessBank_1 (rwbar addr_in_bank wdata) (rdata_1)
+      	$guard (b2) $call accessBank_2 (rwbar addr_in_bank wdata) (rdata_2)
+      	$guard (b3) $call accessBank_3 (rwbar addr_in_bank wdata) (rdata_3)
+      	rdata := ($excmux b0 rdata_0 b1 rdata_1 b2 rdata_2 b3 rdata_3)
+	 	memory_response_1 := rdata
+      $while 1
+    }
+    $branchblock[loop2] {
+      $dopipeline $depth 15 $fullrate $merge $entry $loopback $phi req := memory_access_2 $on $entry, $loopback $endmerge
+      	$volatile $split (req 1 16 32) (rwbar addr16 wdata)
+      	$volatile bank_id := ($slice addr16 1 0)
+      	$volatile addr_in_bank := ($slice addr16 15 2)
+        $volatile b0 := (bank_id == 0) $volatile b1 := (bank_id == 1) $volatile b2 := (bank_id == 2) $volatile b3 := (bank_id == 3)
+      	$guard (b0) $call accessBank_0 (rwbar addr_in_bank wdata) (rdata_0)
+      	$guard (b1) $call accessBank_1 (rwbar addr_in_bank wdata) (rdata_1)
+      	$guard (b2) $call accessBank_2 (rwbar addr_in_bank wdata) (rdata_2)
+      	$guard (b3) $call accessBank_3 (rwbar addr_in_bank wdata) (rdata_3)
+      	rdata := ($excmux b0 rdata_0 b1 rdata_1 b2 rdata_2 b3 rdata_3)
+	 	memory_response_2 := rdata
+      $while 1
+    }
+    $branchblock[loop3] {
+      $dopipeline $depth 15 $fullrate $merge $entry $loopback $phi req := memory_access_3 $on $entry, $loopback $endmerge
+      	$volatile $split (req 1 16 32) (rwbar addr16 wdata)
+      	$volatile bank_id := ($slice addr16 1 0)
+      	$volatile addr_in_bank := ($slice addr16 15 2)
+        $volatile b0 := (bank_id == 0) $volatile b1 := (bank_id == 1) $volatile b2 := (bank_id == 2) $volatile b3 := (bank_id == 3)
+      	$guard (b0) $call accessBank_0 (rwbar addr_in_bank wdata) (rdata_0)
+      	$guard (b1) $call accessBank_1 (rwbar addr_in_bank wdata) (rdata_1)
+      	$guard (b2) $call accessBank_2 (rwbar addr_in_bank wdata) (rdata_2)
+      	$guard (b3) $call accessBank_3 (rwbar addr_in_bank wdata) (rdata_3)
+      	rdata := ($excmux b0 rdata_0 b1 rdata_1 b2 rdata_2 b3 rdata_3)
+	 	memory_response_3 := rdata
+      $while 1
+    }
+  }
+}

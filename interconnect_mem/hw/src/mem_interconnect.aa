@@ -1,0 +1,21 @@
+#include "mem_daemon_incl.aa"
+
+#define CONVERTERDAEMON   converter_0_Daemon
+#define INPUT_64_PORT     tb_memory_access_0
+#define OUTPUT_49_PORT    memory_access_0
+#include "converter_incl.aa"
+
+#define CONVERTERDAEMON   converter_1_Daemon
+#define INPUT_64_PORT     tb_memory_access_1
+#define OUTPUT_49_PORT    memory_access_1
+#include "converter_incl.aa"
+
+#define CONVERTERDAEMON   converter_2_Daemon
+#define INPUT_64_PORT     tb_memory_access_2
+#define OUTPUT_49_PORT    memory_access_2
+#include "converter_incl.aa"
+
+#define CONVERTERDAEMON   converter_3_Daemon
+#define INPUT_64_PORT     tb_memory_access_3
+#define OUTPUT_49_PORT    memory_access_3
+#include "converter_incl.aa"
