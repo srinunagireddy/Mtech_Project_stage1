@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CamPeek — Sharing</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; max-width: 640px; margin: 0 auto; }
+  video { width: 100%; border-radius: 12px; background: #000; }
+  #status { padding: 10px; text-align: center; font-size: 0.95rem; }
+  button { padding: 12px 16px; font-size: 1rem; border: none; border-radius: 8px;
+           background: #2563eb; color: #fff; margin: 6px 4px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <div id="status">Starting…</div>
+  <video id="local" autoplay playsinline muted></video>
+  <div style="text-align:center">
+    <button id="flip">Flip camera</button>
+  </div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const ROOM = params.get("room");
+const statusEl = document.getElementById("status");
+const localVideo = document.getElementById("local");
+
+const RTC_CONFIG = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" }
+    // If the stream won't connect on mobile data, add a TURN server here (see README).
+  ]
+};
+
+let ws, pc, stream;
+let facing = "environment"; // start with the rear camera
+
+function setStatus(t) { statusEl.textContent = t; }
+
+async function getCamera() {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: facing },
+    audio: false
+  });
+  localVideo.srcObject = stream;
+}
+
+function connectWS() {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  ws = new WebSocket(`${proto}://${location.host}`);
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: "join", room: ROOM, role: "broadcaster" }));
+    setStatus("Waiting for the viewer to join room " + ROOM + "…");
+  };
+  ws.onmessage = async (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === "peer-ready") { await startCall(); }
+    else if (msg.type === "answer") { await pc.setRemoteDescription(msg.sdp); }
+    else if (msg.type === "ice" && pc) { try { await pc.addIceCandidate(msg.candidate); } catch {} }
+    else if (msg.type === "peer-left") { setStatus("Viewer left. Waiting again…"); }
+    else if (msg.type === "error") { setStatus("Error: " + msg.reason); }
+  };
+}
+
+async function startCall() {
+  setStatus("Viewer joined — connecting…");
+  pc = new RTCPeerConnection(RTC_CONFIG);
+  stream.getTracks().forEach(t => pc.addTrack(t, stream));
+  pc.onicecandidate = (e) => { if (e.candidate) ws.send(JSON.stringify({ type: "ice", candidate: e.candidate })); };
+  pc.onconnectionstatechange = () => {
+    if (pc.connectionState === "connected") setStatus("● Live — your camera is being watched");
+    if (pc.connectionState === "failed") setStatus("Connection failed. A TURN server may be needed.");
+  };
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  ws.send(JSON.stringify({ type: "offer", sdp: offer }));
+}
+
+document.getElementById("flip").onclick = async () => {
+  facing = facing === "environment" ? "user" : "environment";
+  await getCamera();
+  if (pc) {
+    const videoTrack = stream.getVideoTracks()[0];
+    const sender = pc.getSenders().find(s => s.track && s.track.kind === "video");
+    if (sender) sender.replaceTrack(videoTrack);
+  }
+};
+
+(async () => {
+  try {
+    await getCamera();
+    connectWS();
+  } catch (err) {
+    setStatus("Camera permission denied or unavailable. Tap Allow and reload.");
+  }
+})();
+</script>
+</body>
+</html>

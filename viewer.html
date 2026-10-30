@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CamPeek — Watching</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; max-width: 640px; margin: 0 auto; }
+  video { width: 100%; border-radius: 12px; background: #000; }
+  #status { padding: 10px; text-align: center; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+  <div id="status">Connecting…</div>
+  <video id="remote" autoplay playsinline controls></video>
+
+<script>
+const params = new URLSearchParams(location.search);
+const ROOM = params.get("room");
+const statusEl = document.getElementById("status");
+const remoteVideo = document.getElementById("remote");
+
+const RTC_CONFIG = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" }
+    // Add the same TURN server here as in broadcaster.html if needed.
+  ]
+};
+
+let ws, pc;
+function setStatus(t) { statusEl.textContent = t; }
+
+function connectWS() {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  ws = new WebSocket(`${proto}://${location.host}`);
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: "join", room: ROOM, role: "viewer" }));
+    setStatus("Waiting for the camera to start in room " + ROOM + "…");
+  };
+  ws.onmessage = async (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === "offer") {
+      pc = new RTCPeerConnection(RTC_CONFIG);
+      pc.ontrack = (ev) => { remoteVideo.srcObject = ev.streams[0]; setStatus("● Live"); };
+      pc.onicecandidate = (e) => { if (e.candidate) ws.send(JSON.stringify({ type: "ice", candidate: e.candidate })); };
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === "failed") setStatus("Connection failed. A TURN server may be needed.");
+      };
+      await pc.setRemoteDescription(msg.sdp);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      ws.send(JSON.stringify({ type: "answer", sdp: answer }));
+      setStatus("Connecting…");
+    } else if (msg.type === "ice" && pc) {
+      try { await pc.addIceCandidate(msg.candidate); } catch {}
+    } else if (msg.type === "peer-left") {
+      setStatus("The camera stopped sharing.");
+    } else if (msg.type === "error") {
+      setStatus("Error: " + msg.reason);
+    }
+  };
+}
+
+connectWS();
+</script>
+</body>
+</html>
